@@ -67,6 +67,10 @@ typedef uint64_t SequenceNumber;
 static const SequenceNumber kMaxSequenceNumber =
     ((0x1ull << 56) - 1);
 
+/*
+ * 类名:ParsedInternalKey
+ * 功能:ParsedInternalKey是对InternalKey分拆后的结果
+ */
 struct ParsedInternalKey {
   Slice user_key;
   SequenceNumber sequence;
@@ -84,6 +88,11 @@ inline size_t InternalKeyEncodingLength(const ParsedInternalKey& key) {
 }
 
 // Append the serialization of "key" to *result.
+/*
+ * 函 数:AppendInternalKey
+ * 功 能:把key序列化之后追加到result中
+ * 注意:result的格式是user_key(string)  Sequence number(7bytes)  value type(1byte)
+ */
 extern void AppendInternalKey(std::string* result,
                               const ParsedInternalKey& key);
 
@@ -95,6 +104,10 @@ extern bool ParseInternalKey(const Slice& internal_key,
                              ParsedInternalKey* result);
 
 // Returns the user key portion of an internal key.
+/*
+ * 函 数:ExtractUserKey
+ * 功 能:从internal_key中解析出user_key
+ */
 inline Slice ExtractUserKey(const Slice& internal_key) {
   assert(internal_key.size() >= 8);
   return Slice(internal_key.data(), internal_key.size() - 8);
@@ -117,9 +130,17 @@ class InternalKeyComparator : public Comparator {
   explicit InternalKeyComparator(const Comparator* c) : user_comparator_(c) { }
   virtual const char* Name() const;
   virtual int Compare(const Slice& a, const Slice& b) const;
+/*
+ * 函 数:FindShortestSeparator
+ * 功 能:如果*start < limit，就在[start, limit)中找到一个短的字符串，并赋给*start返回
+ */
   virtual void FindShortestSeparator(
       std::string* start,
       const Slice& limit) const;
+/*
+ * 函 数:FindShortSuccessor
+ * 功 能:找一个>=*key的短字符串，
+ */
   virtual void FindShortSuccessor(std::string* key) const;
 
   const Comparator* user_comparator() const { return user_comparator_; }
@@ -186,6 +207,10 @@ inline bool ParseInternalKey(const Slice& internal_key,
 }
 
 // A helper class useful for DBImpl::Get()
+/*
+ * 类 名:LookupKey
+ * 功 能:MemTable的查询接口传入的是LookupKey
+ */
 class LookupKey {
  public:
   // Initialize *this for looking up user_key at a snapshot with

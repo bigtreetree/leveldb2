@@ -87,21 +87,30 @@ void MemTable::Add(SequenceNumber s, ValueType type,
   //  key bytes    : char[internal_key.size()]
   //  value_size   : varint32 of value.size()
   //  value bytes  : char[value.size()]
+  //  internal_key 由user_key + sequence + type构成
   size_t key_size = key.size();
   size_t val_size = value.size();
   size_t internal_key_size = key_size + 8;
   const size_t encoded_len =
       VarintLength(internal_key_size) + internal_key_size +
       VarintLength(val_size) + val_size;
+//分配内存空间
   char* buf = arena_.Allocate(encoded_len);
+//varin压缩internal_key_size
   char* p = EncodeVarint32(buf, internal_key_size);
+//复制key内容
   memcpy(p, key.data(), key_size);
+
   p += key_size;
+//复制sequence | type
   EncodeFixed64(p, (s << 8) | type);
   p += 8;
+//varint压缩val_size
   p = EncodeVarint32(p, val_size);
+//复制value
   memcpy(p, value.data(), val_size);
   assert((p + val_size) - buf == encoded_len);
+//向跳跃表中插入entry
   table_.Insert(buf);
 }
 
@@ -126,6 +135,7 @@ bool MemTable::Get(const LookupKey& key, std::string* value, Status* s) {
             Slice(key_ptr, key_length - 8),
             key.user_key()) == 0) {
       // Correct user key
+      // tag是sequence | type
       const uint64_t tag = DecodeFixed64(key_ptr + key_length - 8);
       switch (static_cast<ValueType>(tag & 0xff)) {
         case kTypeValue: {

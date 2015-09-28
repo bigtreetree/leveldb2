@@ -22,6 +22,10 @@
 
 namespace leveldb {
 
+/*
+ * 类 名:Slice
+ * 功 能:字符串管理
+ */
 class Slice {
  public:
   // Create an empty slice.

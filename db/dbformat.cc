@@ -52,6 +52,9 @@ int InternalKeyComparator::Compare(const Slice& akey, const Slice& bkey) const {
   //    increasing user key (according to user-supplied comparator)
   //    decreasing sequence number
   //    decreasing type (though sequence# should be enough to disambiguate)
+  // 比较顺序:
+  // 	首先比较user key,基于用户设置的comparator,如果user key不相等就直接返回比较结果；否则执行进入下一步
+  // 	取出8字节的sequence number | value type ，如果akey 的> bkey的则返回-1,如果akey的<bkey的返回１，相等返回0
   int r = user_comparator_->Compare(ExtractUserKey(akey), ExtractUserKey(bkey));
   if (r == 0) {
     const uint64_t anum = DecodeFixed64(akey.data() + akey.size() - 8);

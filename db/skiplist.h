@@ -105,7 +105,7 @@ class SkipList {
 
   // Modified only by Insert().  Read racily by readers, but stale
   // values are ok.
-  port::AtomicPointer max_height_;   // Height of the entire list
+  port::AtomicPointer max_height_;   // Height of the entire list  //当前高度
 
   inline int GetMaxHeight() const {
     return static_cast<int>(

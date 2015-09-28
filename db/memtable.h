@@ -53,6 +53,7 @@ class MemTable {
   // Add an entry into memtable that maps key to value at the
   // specified sequence number and with the specified type.
   // Typically value will be empty if type==kTypeDeletion.
+  // 添加记录(当type == kTypeDeletion时,则实际上删除操作)
   void Add(SequenceNumber seq, ValueType type,
            const Slice& key,
            const Slice& value);
@@ -61,6 +62,7 @@ class MemTable {
   // If memtable contains a deletion for key, store a NotFound() error
   // in *status and return true.
   // Else, return false.
+  // 获取记录
   bool Get(const LookupKey& key, std::string* value, Status* s);
 
  private:
@@ -74,7 +76,7 @@ class MemTable {
   friend class MemTableIterator;
   friend class MemTableBackwardIterator;
 
-  typedef SkipList<const char*, KeyComparator> Table;
+  typedef SkipList<const char*, KeyComparator> Table; //跳跃表
 
   KeyComparator comparator_;
   int refs_;
