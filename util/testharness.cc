@@ -21,6 +21,10 @@ struct Test {
 std::vector<Test>* tests;
 }
 
+/*
+ * 函 数:RegisterTest
+ * 功 能:把base name func组成一个Test ,压入到tests vector中
+ */
 bool RegisterTest(const char* base, const char* name, void (*func)()) {
   if (tests == NULL) {
     tests = new std::vector<Test>;

@@ -135,7 +135,7 @@ class StringSource: public RandomAccessFile {
 };
 
 typedef std::map<std::string, std::string, STLLessThan> KVMap;
-
+//unify 使联合，统一
 // Helper class for tests to unify the interface between
 // BlockBuilder/TableBuilder and Block/Table.
 class Constructor {

@@ -15,7 +15,10 @@ namespace leveldb {
 class WritableFile;
 
 namespace log {
-
+/*
+ * 类 名:Writer
+ * 功 能:负责写日志文件
+ */
 class Writer {
  public:
   // Create a writer that will append data to "*dest".

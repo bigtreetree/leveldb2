@@ -33,9 +33,10 @@ Reader::~Reader() {
 }
 
 bool Reader::SkipToInitialBlock() {
+//计算在block内的偏移位置，并调整到开始读取block的起始位置
   size_t offset_in_block = initial_offset_ % kBlockSize;
   uint64_t block_start_location = initial_offset_ - offset_in_block;
-
+//如果偏移在最后的6byte里，肯定不是一条完整的记录，跳到下一个block
   // Don't search a block if we'd be in the trailer
   if (offset_in_block > kBlockSize - 6) {
     offset_in_block = 0;
@@ -57,7 +58,7 @@ bool Reader::SkipToInitialBlock() {
 }
 
 bool Reader::ReadRecord(Slice* record, std::string* scratch) {
-  if (last_record_offset_ < initial_offset_) {
+  if (last_record_offset_ < initial_offset_) { //当前偏移　<指定的偏移,需要Seek
     if (!SkipToInitialBlock()) {
       return false;
     }
@@ -71,6 +72,9 @@ bool Reader::ReadRecord(Slice* record, std::string* scratch) {
   uint64_t prospective_record_offset = 0;
 
   Slice fragment;
+//进入到while循环，直到读取到KLastType或者KFullType的record,或者到了文件结尾，。从日志文件读取完整的record是ReadPhysicalRecord函数完成的
+//读取出现错误时，并不会退出循环，而是汇报错误，继续执行，直到成功读取一条
+//user record,或者遇到文件结尾
   while (true) {
     uint64_t physical_record_offset = end_of_buffer_offset_ - buffer_.size();
     const unsigned int record_type = ReadPhysicalRecord(&fragment);

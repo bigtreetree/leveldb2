@@ -11,6 +11,8 @@ namespace leveldb {
 
 class Slice;
 
+//invoke 调用
+//concurrently 同时地
 // A Comparator object provides a total order across slices that are
 // used as keys in an sstable or a database.  A Comparator implementation
 // must be thread-safe since leveldb may invoke its methods concurrently
@@ -35,6 +37,7 @@ class Comparator {
   //
   // Names starting with "leveldb." are reserved and should not be used
   // by any clients of this package.
+  //名称，主要是为了防止建立和读取时使用了不同的comparator
   virtual const char* Name() const = 0;
 
   // Advanced functions: these are used to reduce the space requirements
@@ -43,6 +46,7 @@ class Comparator {
   // If *start < limit, changes *start to a short string in [start,limit).
   // Simple comparator implementations may return with *start unchanged,
   // i.e., an implementation of this method that does nothing is correct.
+  //找出[start,limit)之间的一个短的串，主要作用是降低一些存储空间
   virtual void FindShortestSeparator(
       std::string* start,
       const Slice& limit) const = 0;
@@ -50,6 +54,7 @@ class Comparator {
   // Changes *key to a short string >= *key.
   // Simple comparator implementations may return with *key unchanged,
   // i.e., an implementation of this method that does nothing is correct.
+  //作用类似，但无上端限制
   virtual void FindShortSuccessor(std::string* key) const = 0;
 };
 

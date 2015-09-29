@@ -21,11 +21,11 @@ class BytewiseComparatorImpl : public Comparator {
   virtual const char* Name() const {
     return "leveldb.BytewiseComparator";
   }
-
+  //直接调用Slice的Compare,按memcmp的方式进行比较，然后再比较长短
   virtual int Compare(const Slice& a, const Slice& b) const {
     return a.compare(b);
   }
-
+  //对start和limit的公共部分外的start中的可以uint8方式+1的字节+1,清除该位之后的数据
   virtual void FindShortestSeparator(
       std::string* start,
       const Slice& limit) const {
@@ -39,6 +39,7 @@ class BytewiseComparatorImpl : public Comparator {
 
     if (diff_index >= min_length) {
       // Do not shorten if one string is a prefix of the other
+       //说明一个是另一个的前缀，此时不作修改，直接返回
     } else {
       uint8_t diff_byte = static_cast<uint8_t>((*start)[diff_index]);
       if (diff_byte < static_cast<uint8_t>(0xff) &&

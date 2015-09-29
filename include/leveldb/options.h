@@ -47,13 +47,16 @@ struct Options {
   // If true, an error is raised if the database already exists.
   // Default: false
   bool error_if_exists;
-
+  //aggressive 侵略的，积极行动的； 有进取心的，
+  //unforesee　未预见的
+  //ramifications 结果
   // If true, the implementation will do aggressive checking of the
   // data it is processing and will stop early if it detects any
   // errors.  This may have unforeseen ramifications: for example, a
   // corruption of one DB entry may cause a large number of entries to
   // become unreadable or for the entire DB to become unopenable.
   // Default: false
+  //paranoid 偏执的
   bool paranoid_checks;
 
   // Use the specified object to interact with the environment,
@@ -72,7 +75,8 @@ struct Options {
 
   // Amount of data to build up in memory (backed by an unsorted log
   // on disk) before converting to a sorted on-disk file.
-  //
+  
+  //bulk 大量的
   // Larger values increase performance, especially during bulk loads.
   // Up to two write buffers may be held in memory at the same time,
   // so you may wish to adjust this parameter to control memory usage.
@@ -87,6 +91,9 @@ struct Options {
   // one open file per 2MB of working set).
   //
   // Default: 1000
+  //db中需要打开的文件包括基本的CURRENT/LOG/MANIFEST/LOCK,以及打开的sstable文件
+  //sstable一旦打开，就会将index信息加入TableCache,所以把
+  //max_open_files - 10作为table cache的最大数量
   int max_open_files;
 
   // Control over blocks (user data is stored in a set of blocks, and
@@ -96,7 +103,7 @@ struct Options {
   // If NULL, leveldb will automatically create and use an 8MB internal cache.
   // Default: NULL
   Cache* block_cache;
-
+  //Approximate 大约
   // Approximate size of user data packed per block.  Note that the
   // block size specified here corresponds to uncompressed data.  The
   // actual size of the unit read from disk may be smaller if
@@ -110,6 +117,8 @@ struct Options {
   // leave this parameter alone.
   //
   // Default: 16
+  //block 中对key做前缀压缩的区间长度
+  //block中包含record的个数
   int block_restart_interval;
 
   // Compress blocks using the specified compression algorithm.  This
@@ -144,11 +153,13 @@ struct ReadOptions {
   // If true, all data read from underlying storage will be
   // verified against corresponding checksums.
   // Default: false
+   //是否对读到的block做校验
   bool verify_checksums;
 
   // Should the data read for this iteration be cached in memory?
   // Callers may wish to set this field to false for bulk scans.
   // Default: true
+  //读到的block是否加入block cache
   bool fill_cache;
 
   // If "snapshot" is non-NULL, read as of the supplied snapshot
@@ -156,6 +167,7 @@ struct ReadOptions {
   // not have been released).  If "snapshot" is NULL, use an implicit
   // snapshot of the state at the beginning of this read operation.
   // Default: NULL
+  //指定读取的snapshot
   const Snapshot* snapshot;
 
   ReadOptions()
@@ -183,6 +195,7 @@ struct WriteOptions {
   // system call followed by "fsync()".
   //
   // Default: false
+   //write时，记binlog完成之后，是否对binlog做sync
   bool sync;
 
   WriteOptions()

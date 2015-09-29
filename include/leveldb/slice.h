@@ -96,7 +96,10 @@ inline bool operator==(const Slice& x, const Slice& y) {
 inline bool operator!=(const Slice& x, const Slice& y) {
   return !(x == y);
 }
-
+/*
+ * 函 数:compare
+ * 功 能:比较(先按memcmp比较，然后再按长度比较)
+ */
 inline int Slice::compare(const Slice& b) const {
   const size_t min_len = (size_ < b.size_) ? size_ : b.size_;
   int r = memcmp(data_, b.data_, min_len);

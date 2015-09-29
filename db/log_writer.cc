@@ -33,10 +33,12 @@ Status Writer::AddRecord(const Slice& slice) {
   // zero-length record
   Status s;
   bool begin = true;
+//do while循环,直到写入出错，或者成功写入全部数据
   do {
     const int leftover = kBlockSize - block_offset_;
     assert(leftover >= 0);
     if (leftover < kHeaderSize) {
+	//本块中剩余空间不足7,即log recode header
       // Switch to a new block
       if (leftover > 0) {
         // Fill the trailer (literal below relies on kHeaderSize being 7)
@@ -49,11 +51,12 @@ Status Writer::AddRecord(const Slice& slice) {
     // Invariant: we never leave < kHeaderSize bytes in a block.
     assert(kBlockSize - block_offset_ - kHeaderSize >= 0);
 
+//计算block剩余大小,以及本次log record 可写入数据长度
     const size_t avail = kBlockSize - block_offset_ - kHeaderSize;
     const size_t fragment_length = (left < avail) ? left : avail;
 
     RecordType type;
-    const bool end = (left == fragment_length);
+    const bool end = (left == fragment_length);//两者相等，表明写完
     if (begin && end) {
       type = kFullType;
     } else if (begin) {
@@ -63,7 +66,7 @@ Status Writer::AddRecord(const Slice& slice) {
     } else {
       type = kMiddleType;
     }
-
+//调用EmitPhysicalRecord ,append日志，并更新指针,剩余长度和begin标记
     s = EmitPhysicalRecord(type, ptr, fragment_length);
     ptr += fragment_length;
     left -= fragment_length;
@@ -72,6 +75,11 @@ Status Writer::AddRecord(const Slice& slice) {
   return s;
 }
 
+/*
+ * 函 数:EmitPhysicalRecord
+ * 功 能:实际写日志
+ * 参 数:ptr为用户record数据,参数n为record长度,不包含log header 
+ */
 Status Writer::EmitPhysicalRecord(RecordType t, const char* ptr, size_t n) {
   assert(n <= 0xffff);  // Must fit in two bytes
   assert(block_offset_ + kHeaderSize + n <= kBlockSize);
@@ -95,6 +103,7 @@ Status Writer::EmitPhysicalRecord(RecordType t, const char* ptr, size_t n) {
       s = dest_->Flush();
     }
   }
+  //更新当前偏移
   block_offset_ += kHeaderSize + n;
   return s;
 }
