@@ -282,7 +282,7 @@ class ConcurrentTest {
   }
 };
 const uint32_t ConcurrentTest::K;
-
+//concurrent同时发生的
 // Simple test that does single-threaded testing of the ConcurrentTest
 // scaffolding.
 TEST(SkipTest, ConcurrentWithoutThreads) {

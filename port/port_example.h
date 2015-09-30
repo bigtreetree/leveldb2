@@ -21,7 +21,7 @@ namespace port {
 static const bool kLittleEndian = true /* or some other expression */;
 
 // ------------------ Threading -------------------
-
+//exclusive 专用的，高级的，独家
 // A Mutex represents an exclusive lock.
 class Mutex {
  public:
@@ -42,6 +42,10 @@ class Mutex {
   void AssertHeld();
 };
 
+/*
+ * 类 名:CondVar
+ * 功 能:模拟条件变量
+ */
 class CondVar {
  public:
   explicit CondVar(Mutex* mu);

@@ -27,7 +27,10 @@
 namespace leveldb {
 
 class Slice;
-
+/*
+ * 类 名:WriteBatch
+ * 功 能:批量写
+ */
 class WriteBatch {
  public:
   WriteBatch();

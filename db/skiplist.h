@@ -50,6 +50,7 @@ class SkipList {
 
   // Insert key into the list.
   // REQUIRES: nothing that compares equal to key is currently in the list.
+  
   void Insert(const Key& key);
 
   // Returns true iff an entry that compares equal to key is in the list.
@@ -98,7 +99,7 @@ class SkipList {
   enum { kMaxHeight = 12 };
 
   // Immutable after construction
-  Comparator const compare_;
+  Comparator const compare_;    //key值比较函数
   Arena* const arena_;    // Arena used for allocations of nodes
 
   Node* const head_;
@@ -107,19 +108,20 @@ class SkipList {
   // values are ok.
   port::AtomicPointer max_height_;   // Height of the entire list  //当前高度
 
-  inline int GetMaxHeight() const {
+  inline int GetMaxHeight() const {                 //返回skiplist层数
     return static_cast<int>(
         reinterpret_cast<intptr_t>(max_height_.NoBarrier_Load()));
   }
 
   // Read/written only by Insert().
-  Random rnd_;
+  Random rnd_;  //随机器，产生随机的level层数
 
-  Node* NewNode(const Key& key, int height);
-  int RandomHeight();
+  Node* NewNode(const Key& key, int height);    //新建一个结点
+  int RandomHeight();           //随机产生一个level层数
   bool Equal(const Key& a, const Key& b) const { return (compare_(a, b) == 0); }
 
   // Return true if key is greater than the data stored in "n"
+  //判断key的值是否大于n的key值，如果大于则说明key是在结点n后面,返回true（skiplist是升序）,如果是等于或小于则返回false
   bool KeyIsAfterNode(const Key& key, Node* n) const;
 
   // Return the earliest node that comes at or after key.
@@ -127,15 +129,17 @@ class SkipList {
   //
   // If prev is non-NULL, fills prev[level] with pointer to previous
   // node at "level" for every level in [0..max_height_-1].
-  Node* FindGreaterOrEqual(const Key& key, Node** prev) const;
+  //prev用来存放各层中key的直接前趋，若key已经存在某一层,则不会把当前key的结点作为直接前趋
+  //返回第０层大于等于key的结点
+  Node* FindGreaterOrEqual(const Key& key, Node** prev) const;  
 
   // Return the latest node with a key < key.
   // Return head_ if there is no such node.
-  Node* FindLessThan(const Key& key) const;
+  Node* FindLessThan(const Key& key) const; //找到0层比key小的且是最近的结点(不能相等)
 
   // Return the last node in the list.
   // Return head_ if list is empty.
-  Node* FindLast() const;
+  Node* FindLast() const;   //第０层的最后的结点
 
   // No copying allowed
   SkipList(const SkipList&);
@@ -148,7 +152,10 @@ struct SkipList<Key,Comparator>::Node {
   explicit Node(const Key& k) : key(k) { }
 
   Key const key;
-
+  //Accessors 访问函数
+  //mutators  变异设定
+  //appropriate适当的
+  //barrier 屏障
   // Accessors/mutators for links.  Wrapped in methods so we can
   // add the appropriate barriers as necessary.
   Node* Next(int n) {
@@ -265,14 +272,22 @@ typename SkipList<Key,Comparator>::Node* SkipList<Key,Comparator>::FindGreaterOr
   int level = GetMaxHeight() - 1;
   while (true) {
     Node* next = x->Next(level);
+    //key大于next结点，则继续在本层查找
     if (KeyIsAfterNode(key, next)) {
       // Keep searching in this list
       x = next;
-    } else {
+    } 
+    else 
+    {
+       //next结点值大于key或等于key,或next为NULL,x是level层中小于key的直接前趋
       if (prev != NULL) prev[level] = x;
-      if (level == 0) {
+      if (level == 0) 
+      {
+        //返回第０层key的直接后继
         return next;
-      } else {
+      } 
+      else 
+      {
         // Switch to next list
         level--;
       }
@@ -288,14 +303,23 @@ SkipList<Key,Comparator>::FindLessThan(const Key& key) const {
   while (true) {
     assert(x == head_ || compare_(x->key, key) < 0);
     Node* next = x->Next(level);
-    if (next == NULL || compare_(next->key, key) >= 0) {
-      if (level == 0) {
+    //找到本层的尾部或本层的下一节点比要查找的key大或相等，则进行下层查找
+    if (next == NULL || compare_(next->key, key) >= 0) 
+    {
+      //已经是最底层了
+      if (level == 0) 
+      {
         return x;
-      } else {
+      }
+      else 
+      {
+          //不是最底层，则向下一层
         // Switch to next list
         level--;
       }
-    } else {
+    }
+    //当前结点小于要查找的结点，则继续在本层查找
+    else {
       x = next;
     }
   }
@@ -308,14 +332,17 @@ typename SkipList<Key,Comparator>::Node* SkipList<Key,Comparator>::FindLast()
   int level = GetMaxHeight() - 1;
   while (true) {
     Node* next = x->Next(level);
-    if (next == NULL) {
+    if (next == NULL) 
+    {
       if (level == 0) {
         return x;
-      } else {
+      } 
+      else {
         // Switch to next list
         level--;
       }
-    } else {
+    } 
+    else {
       x = next;
     }
   }
@@ -344,8 +371,10 @@ void SkipList<Key,Comparator>::Insert(const Key& key) {
   assert(x == NULL || !Equal(key, x->key));
 
   int height = RandomHeight();
+  //新结点的层次大于当前skiplist的层次
   if (height > GetMaxHeight()) {
     for (int i = GetMaxHeight(); i < height; i++) {
+        //大于的层，直接前趋设置为head_
       prev[i] = head_;
     }
     //fprintf(stderr, "Change height from %d to %d\n", max_height_, height);
@@ -357,6 +386,7 @@ void SkipList<Key,Comparator>::Insert(const Key& key) {
     // the loop below.  In the former case the reader will
     // immediately drop to the next level since NULL sorts after all
     // keys.  In the latter case the reader will use the new node.
+    //重新设置当前skiplist的高度
     max_height_.NoBarrier_Store(reinterpret_cast<void*>(height));
   }
 

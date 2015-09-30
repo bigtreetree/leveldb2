@@ -30,6 +30,7 @@ class BytewiseComparatorImpl : public Comparator {
       std::string* start,
       const Slice& limit) const {
     // Find length of common prefix
+      //先比较获得最大公共前缀
     size_t min_length = std::min(start->size(), limit.size());
     size_t diff_index = 0;
     while ((diff_index < min_length) &&
@@ -39,8 +40,9 @@ class BytewiseComparatorImpl : public Comparator {
 
     if (diff_index >= min_length) {
       // Do not shorten if one string is a prefix of the other
-       //说明一个是另一个的前缀，此时不作修改，直接返回
+       //如果start就是limit的前缀，则只能用start本身作为分割
     } else {
+        //将第一个不同字符＋1,并确保其不会溢出，同时比limit小
       uint8_t diff_byte = static_cast<uint8_t>((*start)[diff_index]);
       if (diff_byte < static_cast<uint8_t>(0xff) &&
           diff_byte + 1 < static_cast<uint8_t>(limit[diff_index])) {
@@ -50,6 +52,9 @@ class BytewiseComparatorImpl : public Comparator {
       }
     }
   }
+  //从上面可以看出，FindShortestSeparator方法并不严格，有些时候没有找出最短分割的key(比如第一个不等的字符
+  //已经为0xff时),它只是一种优化，自定义Comparator时，既可以实现，也可以不实现，如果不实现，将始终使用Data Block
+  //的最大key作为索引，并不影响功能正确性
 
   virtual void FindShortSuccessor(std::string* key) const {
     // Find first character that can be incremented
