@@ -114,7 +114,7 @@ void TableBuilder::Add(const Slice& key, const Slice& value) {
   r->last_key.assign(key.data(), key.size());
   r->num_entries++;
   r->data_block.Add(key, value);
- //S5 如果data block的个数超过限制，就立刻Flush到文件中
+ //S5 如果data block的大小超过限制，就立刻Flush到文件中
   const size_t estimated_block_size = r->data_block.CurrentSizeEstimate();
   if (estimated_block_size >= r->options.block_size) {
     Flush();

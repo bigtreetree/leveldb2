@@ -13,7 +13,7 @@ namespace leveldb {
 
 // Generate new filter every 2KB of data
 static const size_t kFilterBaseLg = 11;
-static const size_t kFilterBase = 1 << kFilterBaseLg;
+static const size_t kFilterBase = 1 << kFilterBaseLg;//1向左移动１１位，为1*2的11次方，即２０４８
 
 FilterBlockBuilder::FilterBlockBuilder(const FilterPolicy* policy)
     : policy_(policy) {
@@ -38,13 +38,13 @@ Slice FilterBlockBuilder::Finish() {
   if (!start_.empty()) {
     GenerateFilter();
   }
-  //S2 从0开始顺序存储各filter的偏移值，见filter block data的数据格式。
+  
   // Append array of per-filter offsets
   const uint32_t array_offset = result_.size();
   for (size_t i = 0; i < filter_offsets_.size(); i++) {
     PutFixed32(&result_, filter_offsets_[i]);
   }
-  //S3 最后是filter个数，和shift常量（11），并返回结果
+  
   PutFixed32(&result_, array_offset);
   result_.push_back(kFilterBaseLg);  // Save encoding parameter in result
   return Slice(result_);

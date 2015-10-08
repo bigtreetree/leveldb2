@@ -56,7 +56,7 @@ struct Options {
   // corruption of one DB entry may cause a large number of entries to
   // become unreadable or for the entire DB to become unopenable.
   // Default: false
-  //paranoid 偏执的
+  //paranoid 偏执的,//好像用来控制是否使用校验和
   bool paranoid_checks;
 
   // Use the specified object to interact with the environment,

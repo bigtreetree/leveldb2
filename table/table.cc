@@ -39,6 +39,7 @@ Status Table::Open(const Options& options,
                    RandomAccessFile* file,
                    uint64_t size,
                    Table** table) {
+  //S1 首先从文件的结尾读取Footer，并Decode到Footer对象中，如果文件长度小于Footer的长度，则报错。
   *table = NULL;
   if (size < Footer::kEncodedLength) {
     return Status::Corruption("file is too short to be an sstable");
@@ -53,7 +54,7 @@ Status Table::Open(const Options& options,
   Footer footer;
   s = footer.DecodeFrom(&footer_input);
   if (!s.ok()) return s;
-
+//S2 解析出了Footer，我们就可以读取index block和meta index了，首先读取index block。
   // Read the index block
   BlockContents contents;
   Block* index_block = NULL;
