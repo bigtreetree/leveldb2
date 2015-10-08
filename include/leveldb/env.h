@@ -28,6 +28,9 @@ class SequentialFile;
 class Slice;
 class WritableFile;
 
+/*
+ * leveldb考虑到移值性问题，将系统相关的处理(文件／进程／时间之类)抽象成Env,用户可以自已实现相应的接口，作为options传入,
+ */
 class Env {
  public:
   Env() { }
@@ -209,6 +212,10 @@ class RandomAccessFile {
 // A file abstraction for sequential writing.  The implementation
 // must provide buffering since callers may append small fragments
 // at a time to the file.
+/*
+ * 类:WriteableFile
+ * 功能:写类的抽像接口，实现接口时必须提供缓冲，因为调用者会依次追加小数据块
+ */
 class WritableFile {
  public:
   WritableFile() { }

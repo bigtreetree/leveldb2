@@ -187,9 +187,11 @@ class ConcurrentTest {
   // Per-key generation
   struct State {
     port::AtomicPointer generation[K];
+	//以内存屏障的方式设置值
     void Set(int k, intptr_t v) {
       generation[k].Release_Store(reinterpret_cast<void*>(v));
     }
+	//以内存屏障的方式读取值
     intptr_t Get(int k) {
       return reinterpret_cast<intptr_t>(generation[k].Acquire_Load());
     }

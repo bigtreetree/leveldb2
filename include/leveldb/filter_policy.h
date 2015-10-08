@@ -21,7 +21,7 @@
 namespace leveldb {
 
 class Slice;
-
+//FilterPolicy是用于key过滤的，可以快速的排除不存在的key
 class FilterPolicy {
  public:
   virtual ~FilterPolicy();
@@ -30,7 +30,7 @@ class FilterPolicy {
   // changes in an incompatible way, the name returned by this method
   // must be changed.  Otherwise, old incompatible filters may be
   // passed to methods of this type.
-  virtual const char* Name() const = 0;
+  virtual const char* Name() const = 0;// 返回filter的名字
 
   // keys[0,n-1] contains a list of keys (potentially with duplicates)
   // that are ordered according to the user supplied comparator.
@@ -38,6 +38,8 @@ class FilterPolicy {
   //
   // Warning: do not change the initial contents of *dst.  Instead,
   // append the newly constructed filter to *dst.
+  //根据指定的参数创建过滤器，并将结果append到dst中，注意：不能修改dst的原始内容，只做append。
+  //参数@keys[0,n-1]包含依据用户提供的comparator排序的key列表--可重复，并把根据这些key创建的filter追加到@*dst中
   virtual void CreateFilter(const Slice* keys, int n, std::string* dst)
       const = 0;
 
@@ -46,6 +48,7 @@ class FilterPolicy {
   // the key was in the list of keys passed to CreateFilter().
   // This method may return true or false if the key was not on the
   // list, but it should aim to return false with a high probability.
+  //参数@filter包含了调用CreateFilter函数append的数据，如果key在传递函数CreateFilter的key列表中，则必须返回tru
   virtual bool KeyMayMatch(const Slice& key, const Slice& filter) const = 0;
 };
 

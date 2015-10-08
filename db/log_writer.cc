@@ -40,10 +40,11 @@ Status Writer::AddRecord(const Slice& slice) {
     if (leftover < kHeaderSize) {
 	//本块中剩余空间不足7,即log recode header
       // Switch to a new block
+      // 注意这里的更换新的块并不需要额外的代码进行控制，只要把当前块写満就可以了，写过之后，它就自动从逻辑上开始向下一个块写
       if (leftover > 0) {
         // Fill the trailer (literal below relies on kHeaderSize being 7)
         assert(kHeaderSize == 7);
-        dest_->Append(Slice("\x00\x00\x00\x00\x00\x00", leftover));
+        dest_->Append(Slice("\x00\x00\x00\x00\x00\x00", leftover));//"\x"表示是16进制
       }
       block_offset_ = 0;
     }
@@ -52,12 +53,13 @@ Status Writer::AddRecord(const Slice& slice) {
     assert(kBlockSize - block_offset_ - kHeaderSize >= 0);
 
 //计算block剩余大小,以及本次log record 可写入数据长度
-    const size_t avail = kBlockSize - block_offset_ - kHeaderSize;
-    const size_t fragment_length = (left < avail) ? left : avail;
+    const size_t avail = kBlockSize - block_offset_ - kHeaderSize; //剩余空间中除去包头可写的包体长度
+    const size_t fragment_length = (left < avail) ? left : avail;//可写入数据长度 为剩余空间和包体两者中小者
+
 
     RecordType type;
-    const bool end = (left == fragment_length);//两者相等，表明写完
-    if (begin && end) {
+    const bool end = (left == fragment_length);//两者相等，当前块可以写完包体
+    if (begin && end) { 
       type = kFullType;
     } else if (begin) {
       type = kFirstType;
@@ -78,28 +80,35 @@ Status Writer::AddRecord(const Slice& slice) {
 /*
  * 函 数:EmitPhysicalRecord
  * 功 能:实际写日志
- * 参 数:ptr为用户record数据,参数n为record长度,不包含log header 
+ * 参 数:ptr为用户record数据,参数n为写入当前块的长度,不包含log header 
  */
+//emit 发射，发出
 Status Writer::EmitPhysicalRecord(RecordType t, const char* ptr, size_t n) {
-  assert(n <= 0xffff);  // Must fit in two bytes
+  assert(n <= 0xffff);  // Must fit in two bytes ,因为每个块为32k，即256 * 4 * 32 大小，故n 是<=65536
   assert(block_offset_ + kHeaderSize + n <= kBlockSize);
 
+//封装记录头
   // Format the header
+  // 记录长度和类型
   char buf[kHeaderSize];
-  buf[4] = static_cast<char>(n & 0xff);
+  buf[4] = static_cast<char>(n & 0xff); //buf[4],buf[5]存放数据长度
   buf[5] = static_cast<char>(n >> 8);
-  buf[6] = static_cast<char>(t);
+  buf[6] = static_cast<char>(t); //buf[6]存放record type
 
   // Compute the crc of the record type and the payload.
+  //计算校验码
   uint32_t crc = crc32c::Extend(type_crc_[t], ptr, n);
   crc = crc32c::Mask(crc);                 // Adjust for storage
-  EncodeFixed32(buf, crc);
+  EncodeFixed32(buf, crc); 	//buf[0], buf[1],buf[2],buf[3]存放crc校验和
 
   // Write the header and the payload
+  // 写入头部
   Status s = dest_->Append(Slice(buf, kHeaderSize));
   if (s.ok()) {
+	//写入包体
     s = dest_->Append(Slice(ptr, n));
     if (s.ok()) {
+	//刷新
       s = dest_->Flush();
     }
   }

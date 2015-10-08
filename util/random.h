@@ -16,9 +16,9 @@ class Random {
  private:
   uint32_t seed_;
  public:
-  explicit Random(uint32_t s) : seed_(s & 0x7fffffffu) {
+  explicit Random(uint32_t s) : seed_(s & 0x7fffffffu) {	//u代表unsigned 
     // Avoid bad seeds.
-    if (seed_ == 0 || seed_ == 2147483647L) {
+    if (seed_ == 0 || seed_ == 2147483647L) { //2147483647 = 2的31次方减1， L表示long
       seed_ = 1;
     }
   }
@@ -46,7 +46,6 @@ class Random {
   // Returns a uniformly distributed value in the range [0..n-1]
   // REQUIRES: n > 0
   uint32_t Uniform(int n) { return Next() % n; }
-
   // Randomly returns true ~"1/n" of the time, and false otherwise.
   // REQUIRES: n > 0
   bool OneIn(int n) { return (Next() % n) == 0; }

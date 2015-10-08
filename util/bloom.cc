@@ -17,7 +17,7 @@ static uint32_t BloomHash(const Slice& key) {
 class BloomFilterPolicy : public FilterPolicy {
  private:
   size_t bits_per_key_;
-  size_t k_;
+  size_t k_;//模拟的hash函数的个数
 
  public:
   explicit BloomFilterPolicy(int bits_per_key)
@@ -34,17 +34,19 @@ class BloomFilterPolicy : public FilterPolicy {
 
   virtual void CreateFilter(const Slice* keys, int n, std::string* dst) const {
     // Compute bloom filter size (in both bits and bytes)
+    // S1 首先根据key个数分配filter空间，并圆整到8byte。
     size_t bits = n * bits_per_key_;
 
     // For small n, we can see a very high false positive rate.  Fix it
     // by enforcing a minimum bloom filter length.
-    if (bits < 64) bits = 64;
+    if (bits < 64) bits = 64;// 如果n太小FP会很高，限定filter的最小长度 
 
     size_t bytes = (bits + 7) / 8;
-    bits = bytes * 8;
+    bits = bytes * 8;// bit计算的空间大小
 
     const size_t init_size = dst->size();
-    dst->resize(init_size + bytes, 0);
+    dst->resize(init_size + bytes, 0);// 分配空间  
+    //S2 在filter最后的字节位压入hash函数个数
     dst->push_back(static_cast<char>(k_));  // Remember # of probes in filter
     char* array = &(*dst)[init_size];
     for (size_t i = 0; i < n; i++) {

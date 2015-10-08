@@ -34,29 +34,31 @@ void FilterBlockBuilder::AddKey(const Slice& key) {
 }
 
 Slice FilterBlockBuilder::Finish() {
+    //S1 如果start_数字不空，把为的key列表生产filter 
   if (!start_.empty()) {
     GenerateFilter();
   }
-
+  //S2 从0开始顺序存储各filter的偏移值，见filter block data的数据格式。
   // Append array of per-filter offsets
   const uint32_t array_offset = result_.size();
   for (size_t i = 0; i < filter_offsets_.size(); i++) {
     PutFixed32(&result_, filter_offsets_[i]);
   }
-
+  //S3 最后是filter个数，和shift常量（11），并返回结果
   PutFixed32(&result_, array_offset);
   result_.push_back(kFilterBaseLg);  // Save encoding parameter in result
   return Slice(result_);
 }
 
 void FilterBlockBuilder::GenerateFilter() {
+  //S1 如果filter中key个数为0，则直接压入result_.size()并返回  
   const size_t num_keys = start_.size();
   if (num_keys == 0) {
     // Fast path if there are no keys for this filter
     filter_offsets_.push_back(result_.size());
     return;
   }
-
+  //S2 从key创建临时key list，根据key的序列字符串kyes_和各key在keys_中的开始位置start_依次提取出key。  
   // Make list of keys from flattened key structure
   start_.push_back(keys_.size());  // Simplify length computation
   tmp_keys_.resize(num_keys);
@@ -65,11 +67,11 @@ void FilterBlockBuilder::GenerateFilter() {
     size_t length = start_[i+1] - start_[i];
     tmp_keys_[i] = Slice(base, length);
   }
-
+  //S3 为当前的key集合生产filter，并append到result_ 
   // Generate filter for current set of keys and append to result_.
   filter_offsets_.push_back(result_.size());
   policy_->CreateFilter(&tmp_keys_[0], num_keys, &result_);
-
+  //S4 清空，重置状态  
   tmp_keys_.clear();
   keys_.clear();
   start_.clear();

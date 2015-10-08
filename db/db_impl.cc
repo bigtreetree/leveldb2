@@ -1140,6 +1140,9 @@ void DBImpl::RecordReadSample(Slice key) {
   }
 }
 
+/*
+ * 返回
+ */
 const Snapshot* DBImpl::GetSnapshot() {
   MutexLock l(&mutex_);
   return snapshots_.New(versions_->LastSequence());
@@ -1160,12 +1163,17 @@ Status DBImpl::Delete(const WriteOptions& options, const Slice& key) {
 }
 
 Status DBImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
+//这个地方使用一个Write类分装，每个write带有一个条件等待
   Writer w(&mutex_);
   w.batch = my_batch;
   w.sync = options.sync;
   w.done = false;
-
+  //加锁
   MutexLock l(&mutex_);
+//writers_是全局对象的deque,这几段也是主要的优化点，比之前的版本
+//这里改用了一个队列，如果队列头部，也就是接下来要处理的并不是该线程,
+//所需要处理的batch以及该batch并没有写成功的话，就条件循环等待和
+//之前的版本不同的是用了队列
   writers_.push_back(&w);
   while (!w.done && &w != writers_.front()) {
     w.cv.Wait();
@@ -1175,10 +1183,16 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
   }
 
   // May temporarily unlock and wait.
+  //获取可用的memtable资源，如果没有资源，就新建一个，然后把memtable挂起为imemtable调用判断是否需要做compact,当然还有有些slow wait的逻辑
   Status status = MakeRoomForWrite(my_batch == NULL);
   uint64_t last_sequence = versions_->LastSequence();
   Writer* last_writer = &w;
   if (status.ok() && my_batch != NULL) {  // NULL batch is for compactions
+//这里引入了另外一个方法，什么作用？这个也是精华所在，按队列中顺序侀
+//在writers队列中的batch另外为啥队列中有多个batch，和之前的实现类似
+//在不需要lock的时候释放lock,这个时候，batch就会将被加入到writers_中
+      
+ //値得注意的是并不是一条记录一个sequence,而是一批记录(一个write batch)
     WriteBatch* updates = BuildBatchGroup(&last_writer);
     WriteBatchInternal::SetSequence(updates, last_sequence + 1);
     last_sequence += WriteBatchInternal::Count(updates);
@@ -1198,6 +1212,7 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
         }
       }
       if (status.ok()) {
+          //写入memtable
         status = WriteBatchInternal::InsertInto(updates, mem_);
       }
       mutex_.Lock();
@@ -1212,7 +1227,8 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
 
     versions_->SetLastSequence(last_sequence);
   }
-
+//循环判断把已经合并写入掉的batch,设置done = true,并且中队列中取出，//并唤醒，那个时候就形如done == true的分支，本来持有某batch的纯种就
+//完成，这等于是某个线程代理完成了其他线程的行为
   while (true) {
     Writer* ready = writers_.front();
     writers_.pop_front();

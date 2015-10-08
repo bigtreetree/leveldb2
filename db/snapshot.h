@@ -25,9 +25,14 @@ class SnapshotImpl : public Snapshot {
   SnapshotImpl* prev_;
   SnapshotImpl* next_;
 
+//sanity 心智健康，通情达理
   SnapshotList* list_;                 // just for sanity checks
+					//list_ 该SnapshortImpl所在的双向链表
 };
 
+/*
+ * SnapshotList是SnapshotImpl的双向环链表
+ */
 class SnapshotList {
  public:
   SnapshotList() {
@@ -36,9 +41,12 @@ class SnapshotList {
   }
 
   bool empty() const { return list_.next_ == &list_; }
+	//返回双向链表中最早插入的那个结点
   SnapshotImpl* oldest() const { assert(!empty()); return list_.next_; }
+//返回双向链表中最晚插入的那个结点
   SnapshotImpl* newest() const { assert(!empty()); return list_.prev_; }
 
+//向双向链表中插入一个新的SequenceNumber(一个SequenceNumber即一个SnapshortImpl)
   const SnapshotImpl* New(SequenceNumber seq) {
     SnapshotImpl* s = new SnapshotImpl;
     s->number_ = seq;
@@ -50,6 +58,7 @@ class SnapshotList {
     return s;
   }
 
+//从双向链表中删除结点s
   void Delete(const SnapshotImpl* s) {
     assert(s->list_ == this);
     s->prev_->next_ = s->next_;
@@ -59,7 +68,7 @@ class SnapshotList {
 
  private:
   // Dummy head of doubly-linked list of snapshots
-  SnapshotImpl list_;
+  SnapshotImpl list_;//双向链表的起始结点
 };
 
 }  // namespace leveldb

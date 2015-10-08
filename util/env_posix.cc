@@ -178,6 +178,7 @@ class PosixWritableFile : public WritableFile {
   FILE* file_;
 
  public:
+//fname 文件名， f fopen之后的文件指针
   PosixWritableFile(const std::string& fname, FILE* f)
       : filename_(fname), file_(f) { }
 

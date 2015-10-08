@@ -14,7 +14,7 @@
 #include "util/logging.h"
 
 namespace leveldb {
-
+//获取重启点个数
 inline uint32_t Block::NumRestarts() const {
   assert(size_ >= sizeof(uint32_t));
   return DecodeFixed32(data_ + size_ - sizeof(uint32_t));
@@ -27,12 +27,12 @@ Block::Block(const BlockContents& contents)
   if (size_ < sizeof(uint32_t)) {
     size_ = 0;  // Error marker
   } else {
-    size_t max_restarts_allowed = (size_-sizeof(uint32_t)) / sizeof(uint32_t);
+    size_t max_restarts_allowed = (size_-sizeof(uint32_t)) / sizeof(uint32_t);//最大可能重启点个数
     if (NumRestarts() > max_restarts_allowed) {
       // The size is too small for NumRestarts()
       size_ = 0;
     } else {
-      restart_offset_ = size_ - (1 + NumRestarts()) * sizeof(uint32_t);
+      restart_offset_ = size_ - (1 + NumRestarts()) * sizeof(uint32_t);//重启点开始区域
     }
   }
 }
@@ -75,16 +75,16 @@ static inline const char* DecodeEntry(const char* p, const char* limit,
 
 class Block::Iter : public Iterator {
  private:
-  const Comparator* const comparator_;
+  const Comparator* const comparator_;//key比较器
   const char* const data_;      // underlying block contents
-  uint32_t const restarts_;     // Offset of restart array (list of fixed32)
-  uint32_t const num_restarts_; // Number of uint32_t entries in restart array
+  uint32_t const restarts_;     // Offset of restart array (list of fixed32)//重启点数组在data中的偏移
+  uint32_t const num_restarts_; // Number of uint32_t entries in restart array//重启点个数
 
   // current_ is offset in data_ of current entry.  >= restarts_ if !Valid
-  uint32_t current_;
-  uint32_t restart_index_;  // Index of restart block in which current_ falls
+  uint32_t current_;//当前entry在data中的偏移>=restarts_表明非法
+  uint32_t restart_index_;  // Index of restart block in which current_ falls//当前entry所在的重启点的index
   std::string key_;
-  Slice value_;
+  Slice value_; //当前value
   Status status_;
 
   inline int Compare(const Slice& a, const Slice& b) const {
@@ -92,6 +92,7 @@ class Block::Iter : public Iterator {
   }
 
   // Return the offset in data_ just past the end of the current entry.
+  //下一个entry在当前value的后面
   inline uint32_t NextEntryOffset() const {
     return (value_.data() + value_.size()) - data_;
   }
@@ -143,11 +144,11 @@ class Block::Iter : public Iterator {
 
   virtual void Prev() {
     assert(Valid());
-
+//首先回跳到在current_前面的那个重启点，并定位到重启点的k/v对开始位置
     // Scan backwards to a restart point before current_
     const uint32_t original = current_;
     while (GetRestartPoint(restart_index_) >= original) {
-      if (restart_index_ == 0) {
+      if (restart_index_ == 0) {//到第一个entry,标记invalid状态
         // No more entries
         current_ = restarts_;
         restart_index_ = num_restarts_;
@@ -156,12 +157,12 @@ class Block::Iter : public Iterator {
       restart_index_--;
     }
 
-    SeekToRestartPoint(restart_index_);
+    SeekToRestartPoint(restart_index_);//根据restart_index定位到重启点的k/v对
     do {
       // Loop until end of current entry hits the start of original entry
     } while (ParseNextKey() && NextEntryOffset() < original);
   }
-
+//跳转到指定的target
   virtual void Seek(const Slice& target) {
     // Binary search in restart array to find the last restart point
     // with a key < target
@@ -227,7 +228,7 @@ class Block::Iter : public Iterator {
     current_ = NextEntryOffset();
     const char* p = data_ + current_;
     const char* limit = data_ + restarts_;  // Restarts come right after data
-    if (p >= limit) {
+    if (p >= limit) {//entry到头了，标记为valid
       // No more entries to return.  Mark as invalid.
       current_ = restarts_;
       restart_index_ = num_restarts_;
@@ -246,7 +247,7 @@ class Block::Iter : public Iterator {
       value_ = Slice(p + non_shared, value_length);
       while (restart_index_ + 1 < num_restarts_ &&
              GetRestartPoint(restart_index_ + 1) < current_) {
-        ++restart_index_;
+        ++restart_index_;//更新重启点index
       }
       return true;
     }

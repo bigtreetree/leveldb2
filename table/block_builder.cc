@@ -53,37 +53,40 @@ void BlockBuilder::Reset() {
   finished_ = false;
   last_key_.clear();
 }
-
+//返回block的预计大小
 size_t BlockBuilder::CurrentSizeEstimate() const {
   return (buffer_.size() +                        // Raw data buffer
           restarts_.size() * sizeof(uint32_t) +   // Restart array
           sizeof(uint32_t));                      // Restart array length
 }
-
+//压入重启点，完成构建
 Slice BlockBuilder::Finish() {
   // Append restart array
   for (size_t i = 0; i < restarts_.size(); i++) {
     PutFixed32(&buffer_, restarts_[i]);
   }
-  PutFixed32(&buffer_, restarts_.size());
+  PutFixed32(&buffer_, restarts_.size());//重启点数量
   finished_ = true;
   return Slice(buffer_);
 }
-
+//添加新的key/value对
 void BlockBuilder::Add(const Slice& key, const Slice& value) {
   Slice last_key_piece(last_key_);
   assert(!finished_);
   assert(counter_ <= options_->block_restart_interval);
+  //保证新加入的key> 已加入的任何一个key
   assert(buffer_.empty() // No values yet?
          || options_->comparator->Compare(key, last_key_piece) > 0);
   size_t shared = 0;
   if (counter_ < options_->block_restart_interval) {
+      //小于重启点，要进行压缩
     // See how much sharing to do with previous string
     const size_t min_length = std::min(last_key_piece.size(), key.size());
     while ((shared < min_length) && (last_key_piece[shared] == key[shared])) {
       shared++;
     }
   } else {
+      //当前点要作为重启点
     // Restart compression
     restarts_.push_back(buffer_.size());
     counter_ = 0;

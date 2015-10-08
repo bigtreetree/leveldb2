@@ -26,7 +26,7 @@ class Writer {
   // "*dest" must remain live while this Writer is in use.
   explicit Writer(WritableFile* dest);
   ~Writer();
-
+//向日志中写入数据
   Status AddRecord(const Slice& slice);
 
  private:

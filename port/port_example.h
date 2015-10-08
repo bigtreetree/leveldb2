@@ -80,6 +80,7 @@ class AtomicPointer {
  private:
   intptr_t rep_;
  public:
+//arbitrary 随意的
   // Initialize to arbitrary value
   AtomicPointer();
 
@@ -91,6 +92,7 @@ class AtomicPointer {
   // reordered ahead of this read.
   void* Acquire_Load() const;
 
+//reordered 再订购，重新安排
   // Set v as the stored pointer with the guarantee that no earlier
   // memory access (read or write) by this thread can be reordered
   // after this store.
