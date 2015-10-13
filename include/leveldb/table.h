@@ -54,6 +54,7 @@ class Table {
   // bytes, and so includes effects like compression of the underlying data.
   // E.g., the approximate offset of the last key in the table will
   // be close to the file length.
+  //这里并不是精确的定位，而是在Table中找到第一个>=指定key的k/v对，然后返回其value在sstable文件中的偏移。
   uint64_t ApproximateOffsetOf(const Slice& key) const;
 
  private:
@@ -61,12 +62,14 @@ class Table {
   Rep* rep_;
 
   explicit Table(Rep* rep) { rep_ = rep; }
+  //它根据参数指明的blockdata，返回一个iterator对象，调用者就可以通过这个iterator对象遍历blockdata存储的k/v对，
   static Iterator* BlockReader(void*, const ReadOptions&, const Slice&);
 
   // Calls (*handle_result)(arg, ...) with the entry found after a call
   // to Seek(key).  May not make such a call if filter policy says
   // that key is not present.
   friend class TableCache;
+  //这是为TableCache开的一个口子
   Status InternalGet(
       const ReadOptions&, const Slice& key,
       void* arg,
