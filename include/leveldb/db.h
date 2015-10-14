@@ -43,6 +43,7 @@ struct Range {
 // A DB is a persistent ordered map from keys to values.
 // A DB is safe for concurrent access from multiple threads without
 // any external synchronization.
+//leveldb对外接口，db数据库
 class DB {
  public:
   // Open the database with the specified "name".

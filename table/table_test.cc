@@ -434,6 +434,8 @@ static const TestArgs kTestArgList[] = {
 };
 static const int kNumTestArgs = sizeof(kTestArgList) / sizeof(kTestArgList[0]);
 
+
+
 class Harness {
  public:
   Harness() : constructor_(NULL) { }
@@ -643,7 +645,7 @@ class Harness {
   Options options_;
   Constructor* constructor_;
 };
-
+//class _TEST_Empty :public Harness
 // Test empty table/block.
 TEST(Harness, Empty) {
   for (int i = 0; i < kNumTestArgs; i++) {
