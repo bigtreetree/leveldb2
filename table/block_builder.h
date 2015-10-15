@@ -14,7 +14,7 @@ namespace leveldb {
 
 struct Options;
 
-class BlockBuilder {
+ class BlockBuilder {
  public:
   explicit BlockBuilder(const Options* options);
   //重设 内容，通常在Finish之后调用已构建新的block

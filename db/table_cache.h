@@ -20,6 +20,7 @@ class Env;
 
 class TableCache {
  public:
+    //entries 是文件的个数
   TableCache(const std::string& dbname, const Options* options, int entries);
   ~TableCache();
 

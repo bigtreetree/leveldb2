@@ -94,9 +94,9 @@ Options SanitizeOptions(const std::string& dbname,
   Options result = src;
   result.comparator = icmp;
   result.filter_policy = (src.filter_policy != NULL) ? ipolicy : NULL;
-  ClipToRange(&result.max_open_files,    64 + kNumNonTableCacheFiles, 50000);
-  ClipToRange(&result.write_buffer_size, 64<<10,                      1<<30);
-  ClipToRange(&result.block_size,        1<<10,                       4<<20);
+  ClipToRange(&result.max_open_files,    64 + kNumNonTableCacheFiles, 50000);//在74和50000之间
+  ClipToRange(&result.write_buffer_size, 64<<10,                      1<<30);//在64k与1G之间
+  ClipToRange(&result.block_size,        1<<10,                       4<<20);//在1k与4M之间
   if (result.info_log == NULL) {
     // Open a log file in the same directory as the db
     src.env->CreateDir(dbname);  // In case it does not exist
@@ -108,7 +108,7 @@ Options SanitizeOptions(const std::string& dbname,
     }
   }
   if (result.block_cache == NULL) {
-    result.block_cache = NewLRUCache(8 << 20);
+    result.block_cache = NewLRUCache(8 << 20);//8M
   }
   return result;
 }
@@ -119,8 +119,8 @@ DBImpl::DBImpl(const Options& raw_options, const std::string& dbname)
       internal_filter_policy_(raw_options.filter_policy),
       options_(SanitizeOptions(dbname, &internal_comparator_,
                                &internal_filter_policy_, raw_options)),
-      owns_info_log_(options_.info_log != raw_options.info_log),
-      owns_cache_(options_.block_cache != raw_options.block_cache),
+      owns_info_log_(options_.info_log != raw_options.info_log),//两者不相等，说明采用的是自己的log
+      owns_cache_(options_.block_cache != raw_options.block_cache),//两者不相等，说明采用的是内部的LRU
       dbname_(dbname),
       db_lock_(NULL),
       shutting_down_(NULL),
@@ -138,6 +138,7 @@ DBImpl::DBImpl(const Options& raw_options, const std::string& dbname)
   has_imm_.Release_Store(NULL);
 
   // Reserve ten files or so for other uses and give the rest to TableCache.
+  //预留１０个文件用作它用，其任的留给TableCache使用
   const int table_cache_size = options_.max_open_files - kNumNonTableCacheFiles;
   table_cache_ = new TableCache(dbname_, &options_, table_cache_size);
 
@@ -1183,16 +1184,16 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
   }
 
   // May temporarily unlock and wait.
-  //获取可用的memtable资源，如果没有资源，就新建一个，然后把memtable挂起为imemtable调用判断是否需要做compact,当然还有有些slow wait的逻辑
+  //检查memtable有没有空间可以写入，如果没有，就新建一个，然后把memtable挂起为imemtable调用判断是否需要做compact,当然还有有些slow wait的逻辑
   Status status = MakeRoomForWrite(my_batch == NULL);
   uint64_t last_sequence = versions_->LastSequence();
   Writer* last_writer = &w;
   if (status.ok() && my_batch != NULL) {  // NULL batch is for compactions
-//这里引入了另外一个方法，什么作用？这个也是精华所在，按队列中顺序侀
-//在writers队列中的batch另外为啥队列中有多个batch，和之前的实现类似
-//在不需要lock的时候释放lock,这个时候，batch就会将被加入到writers_中
-      
- //値得注意的是并不是一条记录一个sequence,而是一批记录(一个write batch)
+      //主要的地方就是这个BuildBatchGroup 函数, 这个函数做的是将这个队列里面前几个的Writer, 合并成一个Batch.
+      //这么做的原因我想主要也是为了性能考虑, 因为这里我们每一次的Put, 都是一个batch, 所以这里会将多个的batch
+      //合并成一个Batch来进行处理, 这样能明显的提高性能.
+      //所以这里将队列的前几个Batch合并成了一个Batch, 由当前的Batch处理了. 所以刚才上面那个代码会判断一下当前的这个
+      //Write 是否已经被处理好了
     WriteBatch* updates = BuildBatchGroup(&last_writer);
     WriteBatchInternal::SetSequence(updates, last_sequence + 1);
     last_sequence += WriteBatchInternal::Count(updates);
@@ -1202,6 +1203,8 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
     // and protects against concurrent loggers and concurrent writes
     // into mem_.
     {
+        //因为到这里的时候 只有一个writers_里面的一个能到达这里. 所以这里可以保证这有一个线程到了可以AddRecord这一步了.
+        //所以这里把锁release掉
       mutex_.Unlock();
       status = log_->AddRecord(WriteBatchInternal::Contents(updates));
       bool sync_error = false;
@@ -1458,6 +1461,10 @@ Status DB::Delete(const WriteOptions& opt, const Slice& key) {
 
 DB::~DB() { }
 
+/*
+ * 函 数:Open
+ * 功 能:打开数据库, 打开之后的数据库指针保存到dbptr
+ */
 Status DB::Open(const Options& options, const std::string& dbname,
                 DB** dbptr) {
   *dbptr = NULL;
