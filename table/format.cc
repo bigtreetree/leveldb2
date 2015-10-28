@@ -97,7 +97,7 @@ Status ReadBlock(RandomAccessFile* file,
       return s;
     }
   }
-
+  //压缩类型
   switch (data[n]) {
     case kNoCompression:
       if (data != buf) {

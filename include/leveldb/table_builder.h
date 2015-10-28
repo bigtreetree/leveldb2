@@ -22,7 +22,10 @@ namespace leveldb {
 class BlockBuilder;
 class BlockHandle;
 class WritableFile;
-
+/*
+ * 类 名:TableBuilder
+ * 功 能:构建sst文件
+ */
 class TableBuilder {
  public:
   // Create a builder that will store the contents of the table it is

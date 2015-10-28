@@ -98,6 +98,8 @@ void TableBuilder::Add(const Slice& key, const Slice& value) {
     assert(r->options.comparator->Compare(key, Slice(r->last_key)) > 0);
   }
   //S2 如果标记r->pending_index_entry为true，表明遇到下一个data block的第一个k/v，根据key调整r->last_key，这是通过Comparator的FindShortestSeparator完成的。
+  
+  //r->pending_index_entry为true，说明开始了一个新的block(每个block默认长度不超过４０９６)
   if (r->pending_index_entry) {
     assert(r->data_block.empty());
     r->options.comparator->FindShortestSeparator(&r->last_key, key);
