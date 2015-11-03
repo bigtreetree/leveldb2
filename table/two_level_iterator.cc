@@ -62,15 +62,15 @@ class TwoLevelIterator: public Iterator {
   void SetDataIterator(Iterator* data_iter);
   void InitDataBlock();
 
-  BlockFunction block_function_;
-  void* arg_;
-  const ReadOptions options_;
-  Status status_;
-  IteratorWrapper index_iter_;
-  IteratorWrapper data_iter_; // May be NULL
+  BlockFunction block_function_;        //block操作函数
+  void* arg_;                           //BlockFunction的自定义参数
+  const ReadOptions options_;           //BlockFunction 的read option参数
+  Status status_;                       //当前状态
+  IteratorWrapper index_iter_;          //遍历block的迭代器
+  IteratorWrapper data_iter_; // May be NULL    //遍历block data的迭代器
   // If data_iter_ is non-NULL, then "data_block_handle_" holds the
   // "index_value" passed to block_function_ to create the data_iter_.
-  std::string data_block_handle_;
+  std::string data_block_handle_;      
 };
 
 TwoLevelIterator::TwoLevelIterator(
@@ -96,7 +96,7 @@ void TwoLevelIterator::Seek(const Slice& target) {
 }
 
 void TwoLevelIterator::SeekToFirst() {
-  index_iter_.SeekToFirst();
+  index_iter_.  ();
   InitDataBlock();
   if (data_iter_.iter() != NULL) data_iter_.SeekToFirst();
   SkipEmptyDataBlocksForward();
@@ -121,7 +121,7 @@ void TwoLevelIterator::Prev() {
   SkipEmptyDataBlocksBackward();
 }
 
-
+//向前跳过空的datablock，函数实现如下
 void TwoLevelIterator::SkipEmptyDataBlocksForward() {
   while (data_iter_.iter() == NULL || !data_iter_.Valid()) {
     // Move to next block
@@ -134,7 +134,7 @@ void TwoLevelIterator::SkipEmptyDataBlocksForward() {
     if (data_iter_.iter() != NULL) data_iter_.SeekToFirst();
   }
 }
-
+//向后跳过空的datablock
 void TwoLevelIterator::SkipEmptyDataBlocksBackward() {
   while (data_iter_.iter() == NULL || !data_iter_.Valid()) {
     // Move to next block
@@ -152,7 +152,7 @@ void TwoLevelIterator::SetDataIterator(Iterator* data_iter) {
   if (data_iter_.iter() != NULL) SaveError(data_iter_.status());
   data_iter_.Set(data_iter);
 }
-
+//初始化data block
 void TwoLevelIterator::InitDataBlock() {
   if (!index_iter_.Valid()) {
     SetDataIterator(NULL);

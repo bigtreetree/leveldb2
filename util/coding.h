@@ -133,16 +133,20 @@ inline uint64_t DecodeFixed64(const char* ptr) {
 extern const char* GetVarint32PtrFallback(const char* p,
                                           const char* limit,
                                           uint32_t* value);
+//返回varint32之后的起始地址, value用来存放计算出uint32值
 inline const char* GetVarint32Ptr(const char* p,
                                   const char* limit,
                                   uint32_t* value) {
   if (p < limit) {
+    //第一个字节的值赋值给result
     uint32_t result = *(reinterpret_cast<const unsigned char*>(p));
+    //如果result的最高位为0，说明数字只占一个字节
     if ((result & 128) == 0) {
       *value = result;
       return p + 1;
     }
   }
+  //varint32　占用了多个字节,(uint32最多占用５个字节)
   return GetVarint32PtrFallback(p, limit, value);
 }
 

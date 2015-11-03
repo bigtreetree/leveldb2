@@ -17,10 +17,10 @@
 namespace leveldb {
 
 class Env;
-
+//TableCache相当于所有打开的.sst文件在内在中的管理结构，内部采用LRUCache,每个打开的.sst文件在LRUCache中都有一项:map<file_number->{file, table}>
 class TableCache {
  public:
-    //entries 是文件的个数
+    //entries用来设置lru的容量
   TableCache(const std::string& dbname, const Options* options, int entries);
   ~TableCache();
 
@@ -31,6 +31,7 @@ class TableCache {
   // the returned iterator.  The returned "*tableptr" object is owned by
   // the cache and should not be deleted, and is valid for as long as the
   // returned iterator is live.
+  // 新建一个.sst文件内存映像
   Iterator* NewIterator(const ReadOptions& options,
                         uint64_t file_number,
                         uint64_t file_size,

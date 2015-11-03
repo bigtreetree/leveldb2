@@ -75,7 +75,7 @@ static inline const char* DecodeEntry(const char* p, const char* limit,
 
 class Block::Iter : public Iterator {
  private:
-  const Comparator* const comparator_;//key比较器
+  const Comparator* const comparator_;                                      //key比较器
   const char* const data_;      // underlying block contents
   uint32_t const restarts_;     // Offset of restart array (list of fixed32)//重启点数组在data中的偏移
   uint32_t const num_restarts_; // Number of uint32_t entries in restart array//重启点个数

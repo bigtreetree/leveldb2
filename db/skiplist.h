@@ -258,13 +258,14 @@ int SkipList<Key,Comparator>::RandomHeight() {
   assert(height <= kMaxHeight);
   return height;
 }
-
+//node结点n的值小于key的值返回true,否则返回false
+//KeyIsAfterNode 的意思是Key的值是否在后面
 template<typename Key, class Comparator>
 bool SkipList<Key,Comparator>::KeyIsAfterNode(const Key& key, Node* n) const {
   // NULL n is considered infinite
   return (n != NULL) && (compare_(n->key, key) < 0);
 }
-
+//prev存放小于key的直接前趋
 template<typename Key, class Comparator>
 typename SkipList<Key,Comparator>::Node* SkipList<Key,Comparator>::FindGreaterOrEqual(const Key& key, Node** prev)
     const {
@@ -294,7 +295,7 @@ typename SkipList<Key,Comparator>::Node* SkipList<Key,Comparator>::FindGreaterOr
     }
   }
 }
-
+//找到第０层小于key的结点
 template<typename Key, class Comparator>
 typename SkipList<Key,Comparator>::Node*
 SkipList<Key,Comparator>::FindLessThan(const Key& key) const {
